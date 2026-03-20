@@ -14,7 +14,7 @@ class PermissionResponse {
   resource?: string;
 }
 
-class RoleResponse {
+export class RoleResponse {
   @Expose()
   id?: number;
 
