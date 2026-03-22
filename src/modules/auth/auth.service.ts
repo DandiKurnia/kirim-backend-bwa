@@ -11,12 +11,96 @@ import { plainToInstance } from 'class-transformer';
 import { StringValue } from 'ms';
 import { AuthRegisterDto } from './dto/auth-register.dto';
 
+type Permission = {
+  id: number;
+  name: string;
+  key: string;
+  resource: string;
+};
+
+type RolePermission = {
+  permission: Permission;
+};
+
+type Role = {
+  id: number;
+  name: string;
+  key: string;
+  rolePermissions: RolePermission[];
+};
+
+type userWithRole = {
+  id: number;
+  email: string;
+  password: string;
+  name: string;
+  roleId: number;
+  role: Role;
+};
+
+type JwtUser = {
+  id: number;
+  email: string;
+  name: string;
+  roleId: number;
+};
+
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
+
+  private generateToken(user: JwtUser): string {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      roleId: user.roleId,
+    };
+
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET_KEY ?? 'secretKey',
+      expiresIn: (process.env.JWT_EXPIRES_IN ?? '1h') as StringValue,
+    });
+  }
+
+  private transformUser(user: userWithRole): UserResponse {
+    // eslint-disable-next-line
+    const { password: _, ...userWithoutPassword } = user;
+
+    const transformedUser = {
+      ...userWithoutPassword,
+
+      role: {
+        ...user.role,
+        permissions: user.role?.rolePermissions?.map(
+          (rolePermission: RolePermission) => ({
+            id: rolePermission.permission.id,
+            name: rolePermission.permission.name,
+            key: rolePermission.permission.key,
+            resource: rolePermission.permission.resource,
+          }),
+        ),
+      },
+    };
+
+    return plainToInstance(UserResponse, transformedUser, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  private buildAuthResponse(user: userWithRole): AuthLoginResponse {
+    const accessToken = this.generateToken(user);
+    const userResponse = this.transformUser(user);
+
+    return plainToInstance(
+      AuthLoginResponse,
+      { accessToken, user: userResponse },
+      { excludeExtraneousValues: true },
+    );
+  }
 
   async login(request: AuthLoginDto): Promise<AuthLoginResponse> {
     const user = await this.prisma.user.findUnique({
@@ -49,48 +133,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      roleId: user.roleId,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET_KEY ?? 'secretKey',
-      expiresIn: (process.env.JWT_EXPIRES_IN ?? '1h') as StringValue,
-    });
-    // eslint-disable-next-line
-    const { password: _, ...userWithoutPassword } = user;
-
-    const transformedUser = {
-      ...userWithoutPassword,
-
-      role: {
-        ...user.role,
-        permissions: user.role.rolePermissions.map((rolePermission) => ({
-          id: rolePermission.permission.id,
-          name: rolePermission.permission.name,
-          key: rolePermission.permission.key,
-          resource: rolePermission.permission.resource,
-        })),
-      },
-    };
-
-    const userResponse = plainToInstance(UserResponse, transformedUser, {
-      excludeExtraneousValues: true,
-    });
-
-    return plainToInstance(
-      AuthLoginResponse,
-      {
-        accessToken,
-        user: userResponse,
-      },
-      {
-        excludeExtraneousValues: true,
-      },
-    );
+    return this.buildAuthResponse(user);
   }
 
   async register(request: AuthRegisterDto): Promise<AuthLoginResponse> {
@@ -135,47 +178,6 @@ export class AuthService {
       },
     });
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      roleId: user.roleId,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET_KEY ?? 'secretKey',
-      expiresIn: (process.env.JWT_EXPIRES_IN ?? '1h') as StringValue,
-    });
-    // eslint-disable-next-line
-    const { password: _, ...userWithoutPassword } = user;
-
-    const transformedUser = {
-      ...userWithoutPassword,
-
-      role: {
-        ...user.role,
-        permissions: user.role.rolePermissions.map((rolePermission) => ({
-          id: rolePermission.permission.id,
-          name: rolePermission.permission.name,
-          key: rolePermission.permission.key,
-          resource: rolePermission.permission.resource,
-        })),
-      },
-    };
-
-    const userResponse = plainToInstance(UserResponse, transformedUser, {
-      excludeExtraneousValues: true,
-    });
-
-    return plainToInstance(
-      AuthLoginResponse,
-      {
-        accessToken,
-        user: userResponse,
-      },
-      {
-        excludeExtraneousValues: true,
-      },
-    );
+    return this.buildAuthResponse(user);
   }
 }
