@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "name": "Kantor Pusat",
+      "address": "Jl. Sudirman No. 123",
+      "phoneNumber": "08912345678"
+    },
+    {
+      "name": "Kantor Cabang 1",
+      "address": "Jl. Sudirman No. 123",
+      "phoneNumber": "08912345678"
+    },
+    {
+      "name": "Kantor Cabang 2",
+      "address": "Jl. Sudirman No. 123",
+      "phoneNumber": "08912345678"
+    },
+    {
+      "name": "Kantor Cabang 3",
+      "address": "Jl. Sudirman No. 123",
+      "phoneNumber": "08912345678"
+    }
+  ]
+}

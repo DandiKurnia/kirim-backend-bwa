@@ -83,7 +83,6 @@ model Branch {
   name        String
   address     String
   phoneNumber String   @map("phone_number")
-  email       String   @unique
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @map("updated_at")
 
