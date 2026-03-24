@@ -5,6 +5,7 @@ import { rolesSeed } from './roles-seed';
 import { permissionsSeed } from './permissions-seed';
 import { usersSeed } from './user-seed';
 import { branchesSeed } from './branches-seed';
+import { employeeBranchesSeed } from './employee-branches-seed';
 
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -21,6 +22,7 @@ async function main() {
   await permissionsSeed(prisma);
   await usersSeed(prisma);
   await branchesSeed(prisma);
+  await employeeBranchesSeed(prisma);
 
   console.log('\n🎉 Seeding selesai!');
 }
