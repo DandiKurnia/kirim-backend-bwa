@@ -38,7 +38,7 @@ export class EmailService {
 
   async testingEmail(to: string): Promise<void> {
     const templateData = {
-      tile: 'Test Email',
+      title: 'Test Email',
       message: 'This is a test email sent from the EmailService.',
     };
 
@@ -50,5 +50,34 @@ export class EmailService {
       subject: 'Test Email from EmailService',
       html: htmlContent,
     });
+  }
+
+  async sendEmailPaymentNotification(
+    to: string,
+    paymentUrl: string,
+    shipmentId: number,
+    amount: number,
+    expiryDate: Date,
+  ): Promise<void> {
+    const templateData = {
+      shipmentId,
+      paymentUrl,
+      amount: amount.toLocaleString('id-ID'),
+      expiryDate: expiryDate.toDateString(),
+    };
+
+    const htmlContent = this.compileTemplate(
+      'payment-notification',
+      templateData,
+    );
+
+    const mailOptions = {
+      from: process.env.SMTP_EMAIL_SENDER || '',
+      to,
+      subject: `Payment Notification for Shipment #${shipmentId}`,
+      html: htmlContent,
+    };
+
+    await this.transporter.sendMail(mailOptions);
   }
 }

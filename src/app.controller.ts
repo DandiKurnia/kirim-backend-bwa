@@ -28,10 +28,13 @@ export class AppController {
 
   @Get('send-email-test')
   async sendEmailTest(): Promise<string> {
-    await this.queueService.addEmailJob({
-      to: 'testing@mail.com',
-      type: 'testing',
-    });
+    await this.queueService.addEmailJob(
+      {
+        to: 'testing@mail.com',
+        type: 'testing',
+      },
+      { attempts: 1 },
+    );
     return 'Test email sent successfully';
   }
 }
