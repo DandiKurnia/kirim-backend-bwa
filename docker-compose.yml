@@ -30,6 +30,25 @@ services:
       interval: 10s
       timeout: 20s
       retries: 5
+  redisinsight:
+    image: redis/redisinsight:2.54
+    container_name: redisinsight
+    ports:
+      - '8001:8001'
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  redis-commander:
+    image: rediscommander/redis-commander
+    container_name: redis-ui
+    ports:
+      - '8081:8081'
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    restart: unless-stopped
+    depends_on:
+      - redis
 
 volumes:
   postgres_data:

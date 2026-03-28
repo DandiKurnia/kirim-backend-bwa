@@ -100,13 +100,13 @@ export class ShipmentsService {
       payerEmail: userAddress.user.email,
       description: `Shipment #${shipment.id} from ${userAddress.address} to ${createShipmentDto.destination_address}`,
       successRedirectURL: `${process.env.FRONTEND_URL}/send-package/detail/${shipment.id}`,
-      invoiceDuration: 86400,
+      invoiceDuration: 1,
     });
 
     const invoice = this.normalizeInvoice(rawInvoice);
 
-    await this.prisma.$transaction(async (prisma) => {
-      await prisma.payment.create({
+    const payment = await this.prisma.$transaction(async (prisma) => {
+      const createdPayment = await prisma.payment.create({
         data: {
           shipmentId: shipment.id,
           externalId: invoice.externalId,
@@ -124,6 +124,8 @@ export class ShipmentsService {
           description: `Shipmet created with total price ${shipmentCost.totalPrice} cent`,
         },
       });
+
+      return createdPayment;
     });
 
     try {
@@ -138,6 +140,22 @@ export class ShipmentsService {
     } catch (error) {
       console.error(
         `Failed to enqueue email job for shipment ${shipment.id}:`,
+        error,
+      );
+    }
+
+    try {
+      await this.queueService.addPaymentExpiryJob(
+        {
+          paymentId: payment.id,
+          shipmentId: shipment.id,
+          externalId: invoice.externalId,
+        },
+        invoice.expiryDate,
+      );
+    } catch (error) {
+      console.error(
+        `Failed to enqueue payment expiry job for shipment ${shipment.id}:`,
         error,
       );
     }
