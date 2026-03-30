@@ -5,10 +5,18 @@ import { QueueModule } from 'src/common/queue/queue.module';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { OpenCageService } from 'src/common/opencage/opencage.service';
 import { XenditService } from 'src/common/xendit/xendit.service';
+import { QrCodeService } from 'src/qrcode/qrcode.service';
+import { ShipmentsWebhookController } from './webhook/shipments-webhook.controller';
 
 @Module({
   imports: [QueueModule],
-  controllers: [ShipmentsController],
-  providers: [ShipmentsService, PrismaService, OpenCageService, XenditService],
+  controllers: [ShipmentsController, ShipmentsWebhookController],
+  providers: [
+    ShipmentsService,
+    PrismaService,
+    OpenCageService,
+    XenditService,
+    QrCodeService,
+  ],
 })
 export class ShipmentsModule {}

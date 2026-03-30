@@ -80,4 +80,28 @@ export class EmailService {
 
     await this.transporter.sendMail(mailOptions);
   }
+
+  async sendPaymentSuccess(
+    to: string,
+    shipmentId: number,
+    amount: number,
+    trackingNumber?: string,
+  ): Promise<void> {
+    const templateData = {
+      shipmentId,
+      amount: amount.toLocaleString('id-ID'),
+      paymentDate: new Date().toDateString(),
+      trackingNumber,
+    };
+
+    const html = this.compileTemplate('payment-success', templateData);
+
+    const mailOptions = {
+      from: process.env.SMTP_EMAIL_SENDER || '',
+      to,
+      subject: `Payment Success for Shipment #${shipmentId}`,
+      html,
+    };
+    await this.transporter.sendMail(mailOptions);
+  }
 }

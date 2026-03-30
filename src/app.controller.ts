@@ -7,7 +7,6 @@ import { EmailService } from './common/email/email.service';
 import { QueueService } from './common/queue/queue.service';
 
 @Controller()
-@UseGuards(JwtAuthGuard, PermissionGuard)
 export class AppController {
   constructor(
     private readonly appService: AppService,

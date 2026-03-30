@@ -7,8 +7,9 @@ import { PaymentExpiredJobData } from './proccessor/payment-expired-queue.proces
 @Injectable()
 export class QueueService {
   constructor(
-    @InjectQueue('email-queue') private emailQueue: Queue,
-    @InjectQueue('ppayment-expired-queue') private paymentQueue: Queue,
+    @InjectQueue('email-queue') private emailQueue: Queue<EmailJobData>,
+    @InjectQueue('ppayment-expired-queue')
+    private paymentQueue: Queue<PaymentExpiredJobData>,
   ) {}
 
   async addEmailJob(
@@ -43,5 +44,16 @@ export class QueueService {
       removeOnComplete: 10,
       removeOnFail: 5,
     });
+  }
+
+  async cancelPaymentExpiryJob(paymentId: number) {
+    const jobs = await this.paymentQueue.getJobs(['delayed', 'waiting']);
+
+    for (const job of jobs) {
+      if (job.data.paymentId === paymentId) {
+        await job.remove();
+        break;
+      }
+    }
   }
 }

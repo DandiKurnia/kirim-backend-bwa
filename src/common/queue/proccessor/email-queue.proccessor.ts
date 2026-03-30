@@ -10,6 +10,7 @@ export interface EmailJobData {
   amount?: number;
   paymentUrl?: string;
   expiryDate?: Date | string;
+  trackingNumber?: string;
 }
 
 @Processor('email-queue')
@@ -44,6 +45,15 @@ export class EmailQueueProcessor {
           this.logger.log(`Email of type ${type} sent successfully to ${to}`);
           break;
         }
+        case 'payment-success':
+          await this.emailService.sendPaymentSuccess(
+            to,
+            shipmentId || 0,
+            amount || 0,
+            data.trackingNumber,
+          );
+          this.logger.log(`Email of type ${type} sent successfully to ${to}`);
+          break;
         default:
           this.logger.warn(`Unknown email job type: ${type}`);
           break;
