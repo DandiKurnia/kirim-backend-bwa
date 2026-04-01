@@ -3,7 +3,7 @@ import { CreateUserAddressDto } from './dto/create-user-address.dto';
 import { UpdateUserAddressDto } from './dto/update-user-address.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { OpenCageService } from 'src/common/opencage/opencage.service';
-import { UserAddress } from '@prisma/client';
+import { UserAddress } from 'src/generated/prisma/client';
 
 @Injectable()
 export class UserAddressesService {

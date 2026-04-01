@@ -3,18 +3,18 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
   UseGuards,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { ShipmentsService } from './shipments.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
-import { UpdateShipmentDto } from './dto/update-shipment.dto';
 import { JwtAuthGuard } from '../auth/guards/legged-in.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
-import { Shipment } from '@prisma/client';
+import { Shipment } from 'src/generated/prisma/client';
+import type { Response } from 'express';
 
 @Controller('shipments')
 @UseGuards(JwtAuthGuard)
@@ -33,25 +33,33 @@ export class ShipmentsController {
   }
 
   @Get()
-  findAll() {
-    return this.shipmentsService.findAll();
+  async findAll(
+    @Req() req: Request & { user: { id: number } },
+  ): Promise<BaseResponse<Shipment[]>> {
+    return {
+      data: await this.shipmentsService.findAll(req.user.id),
+      message: 'Shipments retrieved successfully',
+    };
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.shipmentsService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<BaseResponse<Shipment>> {
+    return {
+      data: await this.shipmentsService.findOne(+id),
+      message: 'Shipment retrieved successfully',
+    };
   }
 
-  @Patch(':id')
-  update(
+  @Get(':id/pdf')
+  async generateShipmentPdf(
     @Param('id') id: string,
-    @Body() updateShipmentDto: UpdateShipmentDto,
-  ) {
-    return this.shipmentsService.update(+id, updateShipmentDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.shipmentsService.remove(+id);
+    @Res() res: Response,
+  ): Promise<void> {
+    const pdfBuffer = await this.shipmentsService.generateShipmentPdf(+id);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="shipment-${id}.pdf"`,
+    });
+    res.send(pdfBuffer);
   }
 }

@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/legged-in.guard';
 import { PermissionGuard } from '../auth/guards/permission.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
-import { EmployeeBranch } from '@prisma/client';
+import { EmployeeBranch } from 'src/generated/prisma/client';
 
 @Controller('employee-branches')
 @UseGuards(JwtAuthGuard, PermissionGuard)

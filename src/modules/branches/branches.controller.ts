@@ -14,7 +14,7 @@ import { UpdateBranchDto } from './dto/update-branch.dto';
 import { JwtAuthGuard } from '../auth/guards/legged-in.guard';
 import { PermissionGuard } from '../auth/guards/permission.guard';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
-import { Branch } from '@prisma/client';
+import { Branch } from 'src/generated/prisma/client';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 
 @Controller('branches')

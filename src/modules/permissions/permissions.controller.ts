@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
-import { Permission } from '@prisma/client';
+import { Permission } from 'src/generated/prisma/client';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/legged-in.guard';
 

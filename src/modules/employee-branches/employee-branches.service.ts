@@ -6,8 +6,8 @@ import {
 import { CreateEmployeeBranchDto } from './dto/create-employee-branch.dto';
 import { UpdateEmployeeBranchDto } from './dto/update-employee-branch.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
-import { EmployeeBranch } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { EmployeeBranch } from 'src/generated/prisma/client';
 
 @Injectable()
 export class EmployeeBranchesService {

@@ -7,15 +7,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
-import { UpdateShipmentDto } from './dto/update-shipment.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { OpenCageService } from 'src/common/opencage/opencage.service';
-import { Shipment } from '@prisma/client';
+import { Shipment } from 'src/generated/prisma/client';
 import { getDistance } from 'geolib';
 import { PaymentStatus } from 'src/common/enum/payment-status.enum';
 import { XenditInvoice } from 'src/common/xendit/xendit.service';
 import { XenditWebhookDto } from './dto/xendit-webhook.dto';
 import { ShipmentStatus } from 'src/common/enum/shipment-status.enum';
+import { PdfService, ShipmentPdfData } from 'src/common/pdf/pdf.service';
 
 type DeliveryType = 'same_day' | 'next_day' | 'regular';
 
@@ -35,6 +35,7 @@ export class ShipmentsService {
     private openCageService: OpenCageService,
     private xenditService: XenditService,
     private qrCodeService: QrCodeService,
+    private pdfService: PdfService,
   ) {}
 
   async create(createShipmentDto: CreateShipmentDto): Promise<Shipment> {
@@ -271,29 +272,47 @@ export class ShipmentsService {
     }
   }
 
-  findAll() {
-    return `This action returns all shipments`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} shipment`;
-  }
-
-  update(id: number, _updateShipmentDto: UpdateShipmentDto) {
-    void _updateShipmentDto;
-    return `This action updates a #${id} shipment`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} shipment`;
-  }
-
   private normalizeDeliveryType(deliveryType: string): DeliveryType {
     if (deliveryType === 'same_day' || deliveryType === 'next_day') {
       return deliveryType;
     }
 
     return 'regular';
+  }
+
+  findAll(userId: number): Promise<Shipment[]> {
+    return this.prisma.shipment.findMany({
+      where: {
+        shipmentDetails: {
+          userId,
+        },
+      },
+      include: {
+        shipmentDetails: true,
+        payment: true,
+        shipmentHistories: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async findOne(id: number): Promise<Shipment> {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id },
+      include: {
+        shipmentDetails: true,
+        payment: true,
+        shipmentHistories: true,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException(`Shipment with ID ${id} not found`);
+    }
+
+    return shipment;
   }
 
   private calculateShippingCost(
@@ -369,6 +388,62 @@ export class ShipmentsService {
       weightPrice,
       distancePrice,
     };
+  }
+
+  async generateShipmentPdf(shipmentId: number): Promise<Buffer> {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id: shipmentId },
+      include: {
+        shipmentDetails: {
+          include: {
+            user: true,
+            userAddress: true,
+          },
+        },
+        payment: true,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException(`Shipment with ID ${shipmentId} not found`);
+    }
+    const shipmentDetail = shipment.shipmentDetails;
+
+    if (!shipmentDetail) {
+      throw new NotFoundException(
+        `Shipment details for shipment ID ${shipmentId} not found`,
+      );
+    }
+
+    const pdfData: ShipmentPdfData = {
+      trackingNumber: shipment.trackingNumber || '',
+      shipmentId: shipment.id,
+      createdAt: shipment.createdAt,
+      deliveryType: shipmentDetail.deliveryType,
+      packageType: shipmentDetail.packageType,
+      weight: shipmentDetail.weight || 0,
+      price: shipment.price || 0,
+      distance: shipment.distance || 0,
+      paymentStatus: shipment.paymentStatus || 'N/A',
+      deliveryStatus: shipment.deliveryStatus || 'N/A',
+      basePrice: shipmentDetail.basePrice || 0,
+      weightPrice: shipmentDetail.weightPrice || 0,
+      distancePrice: shipmentDetail.distancePrice || 0,
+      senderName: shipmentDetail.user.name,
+      senderPhone: shipmentDetail.user.phoneNumber,
+      pickupAddress: shipmentDetail.userAddress.address,
+      seederEmail: shipmentDetail.user.email,
+      recipientName: shipmentDetail.recipientName,
+      recipientPhone: shipmentDetail.recipientPhone,
+      destinationAddress: shipmentDetail.destinationAddress,
+      qrCodePath:
+        shipment.qrCodeImage ||
+        (await this.qrCodeService.generateQrCode(
+          shipment.trackingNumber || '',
+        )),
+    };
+
+    return this.pdfService.generateShipmentPdf(pdfData);
   }
 
   private normalizeInvoice(invoice: XenditInvoice): NormalizedInvoice {

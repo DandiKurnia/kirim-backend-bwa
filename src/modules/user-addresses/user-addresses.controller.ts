@@ -19,7 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
-import { UserAddress } from '@prisma/client';
+import { UserAddress } from 'src/generated/prisma/client';
 
 type RequestWithUser = {
   id: number;

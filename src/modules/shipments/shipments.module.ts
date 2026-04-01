@@ -7,6 +7,7 @@ import { OpenCageService } from 'src/common/opencage/opencage.service';
 import { XenditService } from 'src/common/xendit/xendit.service';
 import { QrCodeService } from 'src/qrcode/qrcode.service';
 import { ShipmentsWebhookController } from './webhook/shipments-webhook.controller';
+import { PdfService } from 'src/common/pdf/pdf.service';
 
 @Module({
   imports: [QueueModule],
@@ -17,6 +18,7 @@ import { ShipmentsWebhookController } from './webhook/shipments-webhook.controll
     OpenCageService,
     XenditService,
     QrCodeService,
+    PdfService,
   ],
 })
 export class ShipmentsModule {}
