@@ -446,6 +446,34 @@ export class ShipmentsService {
     return this.pdfService.generateShipmentPdf(pdfData);
   }
 
+  async findShipmentByTrackingNumber(
+    trackingNumber: string,
+  ): Promise<Shipment> {
+    const shipment = await this.prisma.shipment.findFirst({
+      where: { trackingNumber },
+      include: {
+        shipmentDetails: {
+          include: {
+            user: true,
+            userAddress: true,
+          },
+        },
+        payment: true,
+        shipmentHistories: {
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException(
+        `Shipment with tracking number ${trackingNumber} not found`,
+      );
+    }
+
+    return shipment;
+  }
+
   private normalizeInvoice(invoice: XenditInvoice): NormalizedInvoice {
     const expiryDate =
       invoice.expiryDate instanceof Date

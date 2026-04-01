@@ -62,4 +62,16 @@ export class ShipmentsController {
     });
     res.send(pdfBuffer);
   }
+
+  @Get('tracking/:trackingNumber')
+  async findShipmentByTrackingNumber(
+    @Param('trackingNumber') trackingNumber: string,
+  ): Promise<BaseResponse<Shipment>> {
+    return {
+      data: await this.shipmentsService.findShipmentByTrackingNumber(
+        trackingNumber,
+      ),
+      message: 'Shipment retrieved successfully',
+    };
+  }
 }
